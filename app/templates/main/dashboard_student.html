@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Hello, {{ current_user.name.split()[0] }}{% endblock %}
+{% block subheading %}Discover approved events and manage your registrations.{% endblock %}
+{% block content %}
+<div class="hero-sm">
+  <div><h2>Find your next event</h2><p>{{ available_total }} upcoming event{{ '' if available_total == 1 else 's' }} open to students.</p></div>
+  <div class="hero-actions"><a class="btn primary light" href="{{ url_for('student.browse') }}">Browse events</a><a class="btn ghost" href="{{ url_for('chat.assistant') }}"><svg><use href="#i-chat"/></svg>Ask the AI assistant</a></div>
+</div>
+
+<div class="stats">
+  <a class="stat good" href="{{ url_for('student.my_registrations') }}"><span>Upcoming registrations</span><strong>{{ my_upcoming_total }}</strong></a>
+  <a class="stat" href="{{ url_for('student.browse') }}"><span>Events open to you</span><strong>{{ available_total }}</strong></a>
+  <a class="stat{% if unread_notifications() %} attention{% endif %}" href="{{ url_for('notifications.inbox') }}"><span>Unread notifications</span><strong>{{ unread_notifications() }}</strong></a>
+</div>
+
+<div class="dash-grid">
+  <section class="card">
+    <div class="card-head row"><h2>My upcoming events</h2><a href="{{ url_for('student.my_registrations') }}" class="link">View all</a></div>
+    {% for e in my_upcoming %}
+    <a class="list-row" href="{{ url_for('student.event_detail', event_id=e.id) if e.status == 'approved' else url_for('student.my_registrations') }}">
+      <span class="date-chip"><b>{{ e.event_date[8:] }}</b>{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][e.event_date[5:7]|int - 1] }}</span>
+      <span class="grow"><b>{{ e.name }}</b><small class="muted">{{ e.start_time }}{% if e.venue %} · {{ e.venue }}{% endif %}</small></span>
+    </a>
+    {% else %}
+    <div class="empty-state small"><h3>No registrations yet</h3><p>Register for an event and it will appear here.</p><a class="btn primary" href="{{ url_for('student.browse') }}">Browse events</a></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <div class="card-head row"><h2>Recent notifications</h2><a href="{{ url_for('notifications.inbox') }}" class="link">View all</a></div>
+    {% for n in alerts %}
+    <div class="feed-row"><span class="dot-sm"></span><span class="grow">{{ n.message }}</span><small class="muted">{{ n.created_at[:10] }}</small></div>
+    {% else %}
+    <div class="empty-state small"><p>Registration confirmations and event updates appear here.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card wide">
+    <div class="card-head row"><h2>Upcoming events you can join</h2><a href="{{ url_for('student.browse') }}" class="link">Browse all</a></div>
+    {% if available %}
+    <div class="event-grid">
+      {% for e in available %}{% include "student/_card.html" %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state small"><h3>No upcoming events right now</h3><p>Check back soon: organizers are planning new events.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

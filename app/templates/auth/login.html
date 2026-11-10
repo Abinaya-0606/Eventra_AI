@@ -1,0 +1,14 @@
+{% extends "auth_base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<h1 class="auth-title">Welcome back</h1><p class="auth-sub">Log in to Eventra AI to plan and manage your college events.</p>
+{% if error %}<div class="field-error" role="alert">{{ error }}{% if admin_notice %} <a href="{{ url_for('admin.login') }}">Go to admin login</a>{% endif %}</div>{% endif %}
+<form method="post" action="{{ url_for('auth.login') }}" novalidate data-validate>
+  {{ csrf_field() }}<input type="hidden" name="next" value="{{ next or '' }}">
+  {{ input_row("email", "Email", "email", autocomplete="username") }}
+  {{ input_row("password", "Password", "password", autocomplete="current-password") }}
+  <button class="btn primary block" type="submit">Log in</button>
+</form>
+<p class="auth-links"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a><span>New here? <a href="{{ url_for('auth.register') }}">Create an account</a></span></p>
+{% endblock %}

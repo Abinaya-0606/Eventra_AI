@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}{{ 'Edit event' if editing else 'Create event' }}{% endblock %}
+{% block heading %}{{ 'Edit event' if editing else 'Create event' }}{% endblock %}
+{% block subheading %}{% if editing and event.status == 'approved' %}This event is approved. Saving changes will send it back for approval.{% else %}Save it as a draft now; you can submit it for approval later.{% endif %}{% endblock %}
+{% block content %}
+<div class="card form-card">
+  {% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('events.edit_event', event_id=event.id) if editing else url_for('events.create_event') }}" novalidate data-validate>
+    {{ csrf_field() }}
+    {{ input_row("name", "Event name", maxlength=100) }}
+    <div class="two">
+      <div class="form-row"><label for="event_type">Event type</label>
+        <select id="event_type" name="event_type" required {% if field == 'event_type' %}class="invalid"{% endif %}><option value="">Choose…</option>{% for t in event_types %}<option {{ 'selected' if form.get('event_type') == t }}>{{ t }}</option>{% endfor %}</select></div>
+      {{ input_row("venue", "Venue", required=False, maxlength=100) }}
+    </div>
+    <div class="two">
+      {{ input_row("event_date", "Event date", "date") }}
+      {{ input_row("start_time", "Start time", "time") }}
+    </div>
+    <div class="two">
+      {{ input_row("participants", "Expected participants", "number") }}
+      {{ input_row("duration_hours", "Duration (hours)", "number") }}
+    </div>
+    {{ input_row("budget", "Estimated budget (INR)", "number", hint="Use the Budget Calculator or AI Studio to work this out.") }}
+    <div class="form-row"><label for="description">Description <small>(optional)</small></label>
+      <textarea id="description" name="description" rows="4" maxlength="1000" {% if field == 'description' %}class="invalid"{% endif %}>{{ form.get('description', '') }}</textarea></div>
+    <div class="form-actions">
+      <button class="btn primary" type="submit">{{ 'Save changes' if editing else 'Create event' }}</button>
+      <a class="btn soft" href="{{ url_for('events.detail', event_id=event.id) if editing else url_for('events.list_events') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

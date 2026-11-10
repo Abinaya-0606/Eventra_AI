@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}Venues{% endblock %}
+{% block heading %}Venues{% endblock %}
+{% block subheading %}The college venue list used by AI venue recommendations. Availability is not tracked.{% endblock %}
+{% block content %}
+<div class="split">
+  <div>
+  <div class="table-tools"><label class="sr" for="venue-filter">Filter venues</label><input id="venue-filter" type="search" placeholder="Filter venues…" data-filter-table="venues-table"></div>
+  <div class="card table-wrap">
+    <table class="table users" id="venues-table">
+      <thead><tr><th>Venue</th><th>Capacity</th><th>Cost / day</th><th>Facilities</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for v in venues %}
+        <tr>
+          <td>{{ v.name }}</td><td>{{ v.capacity }}</td><td>{{ "₹{:,.0f}".format(v.cost_per_day) }}</td>
+          <td><small>{{ v.facilities|map('replace', '_', ' ')|join(', ') or '—' }}</small></td>
+          <td><span class="pill {{ 'ok' if v.is_active else 'bad' }}">{{ 'Active' if v.is_active else 'Inactive' }}</span></td>
+          <td><a class="btn soft sm nomt" href="{{ url_for('admin.venue_edit_form', venue_id=v.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin.venue_toggle', venue_id=v.id) }}" class="inline">{{ csrf_field() }}<button class="btn soft sm nomt" type="submit">{{ 'Deactivate' if v.is_active else 'Activate' }}</button></form></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>{{ 'Edit venue' if editing else 'Add a venue' }}</h2><p>Only tick facilities the venue really has.</p></div>
+    <form method="post" action="{{ url_for('admin.venue_save') }}" novalidate data-validate>{{ csrf_field() }}
+      {% if editing %}<input type="hidden" name="venue_id" value="{{ editing.id }}">{% endif %}
+      <div class="form-row"><label for="v-name">Venue name</label><input id="v-name" name="name" maxlength="80" required value="{{ form.get('name', '') }}"></div>
+      <div class="two"><div class="form-row"><label for="v-cap">Capacity</label><input id="v-cap" name="capacity" type="number" min="1" required value="{{ form.get('capacity', '') }}"></div>
+        <div class="form-row"><label for="v-cost">Cost per day (INR)</label><input id="v-cost" name="cost_per_day" type="number" min="0" step="0.01" required value="{{ form.get('cost_per_day', '') }}"></div></div>
+      <fieldset class="checks"><legend>Facilities</legend>
+        {% for key, label in facilities.items() %}<label><input type="checkbox" name="facilities" value="{{ key }}" {{ 'checked' if key in form.get('facilities', []) }}> {{ label }}</label>{% endfor %}
+      </fieldset>
+      <div class="form-row"><label for="v-notes">Notes</label><textarea id="v-notes" name="notes" rows="2" maxlength="300">{{ form.get('notes', '') }}</textarea></div>
+      <div class="form-actions"><button class="btn primary" type="submit">Save venue</button>{% if editing %}<a class="btn soft" href="{{ url_for('admin.venue_list') }}">Cancel</a>{% endif %}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}

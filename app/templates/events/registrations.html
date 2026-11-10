@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}Registered students{% endblock %}
+{% block heading %}Registered students{% endblock %}
+{% block subheading %}{{ event.name }} · {{ event.event_date }}{% endblock %}
+{% block content %}
+<div class="table-tools">
+  <span class="muted">{{ students|length }} of {{ event.participants }} seats taken</span>
+  <span class="hero-actions">
+    <a class="btn soft sm nomt" href="{{ url_for('events.detail', event_id=event.id) }}">← Event</a>
+    {% if students %}<a class="btn soft sm nomt" href="{{ url_for('events.event_registrations_csv', event_id=event.id) }}"><svg><use href="#i-download"/></svg>Download CSV</a>{% endif %}
+  </span>
+</div>
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Department</th><th>Registered</th></tr></thead>
+    <tbody>
+    {% for s in students %}<tr><td>{{ loop.index }}</td><td>{{ s.name }}</td><td>{{ s.email }}</td><td>{{ s.department or '—' }}</td><td>{{ s.created_at[:10] }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No students have registered yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if can_announce %}
+<section class="card sect">
+  <div class="card-head"><h2>Send an update</h2><p>Registered students get this as a notification.</p></div>
+  <form method="post" action="{{ url_for('events.announce', event_id=event.id) }}">{{ csrf_field() }}
+    <div class="form-row"><label for="message">Message</label><textarea id="message" name="message" rows="3" maxlength="250" required placeholder="e.g. The venue has changed to the Auditorium."></textarea></div>
+    <button class="btn primary" type="submit">Send to {{ students|length }} student{{ '' if students|length == 1 else 's' }}</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

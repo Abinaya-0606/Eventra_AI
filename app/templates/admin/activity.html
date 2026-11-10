@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "partials/pagination.html" import pager %}
+{% block title %}Activity logs{% endblock %}
+{% block heading %}Activity logs{% endblock %}
+{% block subheading %}Everything that happened on the platform, newest first.{% endblock %}
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('admin.activity_log') }}" role="search">
+  <div><label class="sr" for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by action or person…" maxlength="100"></div>
+  <button class="btn soft" type="submit">Search</button>
+</form>
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>When (UTC)</th><th>Who</th><th>What</th></tr></thead>
+    <tbody>
+    {% for a in rows %}<tr><td>{{ a.created_at[:16].replace('T', ' ') }}</td><td>{{ a.actor_name or 'Deleted user' }}{% if a.actor_role %} <span class="badge {{ a.actor_role }}">{{ a.actor_role }}</span>{% endif %}</td><td>{{ a.message }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">No activity found.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="muted count">{{ total }} entr{{ 'y' if total == 1 else 'ies' }}</p>
+{{ pager('admin.activity_log', page, pages) }}
+{% endblock %}

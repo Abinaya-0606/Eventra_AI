@@ -1,0 +1,18 @@
+{% extends "auth_base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}Reset password{% endblock %}
+{% block content %}
+{% if invalid %}
+<div class="empty-state small"><h2>This link is not valid</h2><p>It may have expired or already been used.</p>
+  <a class="btn primary" href="{{ url_for('auth.forgot_password') }}">Request a new link</a></div>
+{% else %}
+<h1 class="auth-title">Choose a new password</h1>
+{% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('auth.reset_password', token=token) }}" novalidate data-validate>
+  {{ csrf_field() }}
+  {{ input_row("password", "New password", "password", autocomplete="new-password", hint="At least 8 characters, with a letter and a number.", minlength=8) }}
+  {{ input_row("confirm_password", "Confirm new password", "password", autocomplete="new-password") }}
+  <button class="btn primary block" type="submit">Change password</button>
+</form>
+{% endif %}
+{% endblock %}

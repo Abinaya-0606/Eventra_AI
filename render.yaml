@@ -1,0 +1,39 @@
+# Render Blueprint: create a "Blueprint" service from this file (see README, "Deploy to Render").
+services:
+  - type: web
+    name: eventra-ai
+    runtime: python
+    plan: free                      # see the README: the free plan forgets your data on every redeploy/restart
+    buildCommand: pip install -r requirements.txt && python ingest.py
+    # ONE worker on purpose: login-lockout counters live in memory and SQLite has a single writer.
+    # Threads handle several requests at once; the long timeout is for slow AI calls.
+    startCommand: gunicorn run:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true         # Render makes a random secret for you
+      - key: GROQ_API_KEY
+        sync: false                 # you type this in the Render dashboard; it is never stored in Git
+      - key: APP_BASE_URL
+        sync: false                 # e.g. https://eventra-ai.onrender.com
+      - key: COLLEGE_NAME
+        sync: false
+      - key: ADMIN_EMAIL            # first admin, created once at start-up. Sign in at /admin/login, then delete ADMIN_PASSWORD.
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    # To KEEP data between deploys (paid plan), uncomment this and the two variables below:
+    # disk:
+    #   name: eventra-ai-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # - key: DATABASE_PATH
+    #   value: /var/data/eventai.db
+    # - key: CHROMA_DIR
+    #   value: /var/data/chroma_db

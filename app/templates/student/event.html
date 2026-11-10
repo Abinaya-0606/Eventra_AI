@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}{{ event.name }}{% endblock %}
+{% block heading %}{{ event.name }}{% endblock %}
+{% block subheading %}{{ event.event_type }} · {{ event.event_date }}{% endblock %}
+{% block content %}
+{% set left = event.participants - event.registered_count %}
+<div class="split">
+  <section class="card">
+    <div class="ev-top"><div><span class="type-tag">{{ event.event_type }}</span> {% if registered %}<span class="pill ok">You are registered</span>{% endif %}</div>
+      <a class="btn soft sm nomt" href="{{ url_for('student.browse') }}">← All events</a></div>
+    <dl class="facts" style="grid-template-columns:repeat(2,1fr)">
+      <div><dt>Date & time</dt><dd>{{ event.event_date }} · {{ event.start_time }}</dd></div>
+      <div><dt>Duration</dt><dd>{{ event.duration_hours }} hour{{ '' if event.duration_hours == 1 else 's' }}</dd></div>
+      <div><dt>Venue</dt><dd>{{ event.venue or 'To be announced' }}</dd></div>
+      <div><dt>Organizer</dt><dd>{{ event.owner_name }}</dd></div>
+      <div><dt>Seats</dt><dd>{{ event.registered_count }} of {{ event.participants }} taken</dd></div>
+    </dl>
+    {% if event.description %}<p class="ev-desc">{{ event.description }}</p>{% endif %}
+    {% if schedule %}
+    <h3 class="section-h">Schedule</h3>
+    {% for t, title, desc in schedule %}<div class="list-row"><span class="date-chip" style="width:64px">{{ t }}</span><span class="grow"><b>{{ title }}</b>{% if desc %}<small class="muted">{{ desc }}</small>{% endif %}</span></div>{% endfor %}
+    {% endif %}
+  </section>
+
+  <aside class="card">
+    <div class="card-head"><h2>Registration</h2><p>{{ 'Full' if left <= 0 else left ~ ' seat' ~ ('' if left == 1 else 's') ~ ' left' }}</p></div>
+    {% if registered %}
+      <div class="note info">You are registered for this event. A confirmation was sent to your notifications.</div>
+      {% if can_cancel %}
+      <form method="post" action="{{ url_for('student.cancel', event_id=event.id) }}" data-confirm="Cancel your registration for this event?">{{ csrf_field() }}
+        <input type="hidden" name="next" value="{{ url_for('student.event_detail', event_id=event.id) }}">
+        <button class="btn soft block danger" type="submit">Cancel registration</button></form>
+      {% endif %}
+    {% elif can_register %}
+      <form method="post" action="{{ url_for('student.register', event_id=event.id) }}">{{ csrf_field() }}<button class="btn primary block" type="submit">Register for this event</button></form>
+    {% else %}
+      <div class="note warn">{{ block_reason }}</div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

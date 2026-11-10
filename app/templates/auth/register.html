@@ -1,0 +1,21 @@
+{% extends "auth_base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<h1 class="auth-title">Create your account</h1><p class="auth-sub">Join Eventra AI. Free for students and event organizers.</p>
+{% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('auth.register') }}" novalidate data-validate>
+  {{ csrf_field() }}
+  {{ input_row("name", "Full name", autocomplete="name", maxlength=80) }}
+  {{ input_row("email", "Email", "email", autocomplete="email") }}
+  <div class="two">
+    <div class="form-row"><label for="role">I am a</label>
+      <select id="role" name="role"><option value="student" {{ 'selected' if form.get('role') != 'organizer' }}>Student</option><option value="organizer" {{ 'selected' if form.get('role') == 'organizer' }}>Event organizer</option></select></div>
+    {{ input_row("department", "Department", required=False, maxlength=100) }}
+  </div>
+  {{ input_row("password", "Password", "password", autocomplete="new-password", hint="At least 8 characters, with a letter and a number.", minlength=8) }}
+  {{ input_row("confirm_password", "Confirm password", "password", autocomplete="new-password") }}
+  <button class="btn primary block" type="submit">Create account</button>
+</form>
+<p class="auth-links"><span>Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></span></p>
+{% endblock %}

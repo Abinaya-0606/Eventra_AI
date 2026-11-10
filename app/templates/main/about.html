@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block heading %}About{% endblock %}
+{% block subheading %}How Eventra AI works.{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="about-hero">
+    <span class="logo lg" aria-hidden="true"><svg><use href="#i-eventra"/></svg></span>
+    <div><h2 class="wordmark">Eventra <span class="ai">AI</span></h2><p class="about-tagline">Your Smart Event Companion</p></div>
+  </div>
+  <div class="card-head">
+    <p>Eventra AI is an intelligent AI-powered event planning and management platform that helps users organize events efficiently with smart AI assistance.</p>
+    <p>It helps organizers plan, schedule and prepare college events with AI, while keeping rules and money calculations accurate.</p></div>
+  <h3 class="section-h">Technology stack</h3>
+  <div class="tags"><span>Python</span><span>Flask</span><span>Blueprints</span><span>Groq API</span><span>RAG</span><span>ChromaDB</span><span>HTML / CSS / JavaScript</span></div>
+  <h3 class="section-h">Architecture</h3>
+  <div class="arch">
+    <div><h4>Policy questions (RAG)</h4><ol class="flow"><li>Question (English or Tamil)</li><li>Tamil is translated for search</li><li>Relevant chunks retrieved from ChromaDB</li><li>If nothing relevant: "not enough information"</li><li>Groq answers only from those chunks</li></ol></div>
+    <div><h4>AI Studio</h4><ol class="flow"><li>Form is validated by the backend</li><li>Prompt sent to Groq (JSON output)</li><li>Python checks the structure and does all math</li><li>Result shown and editable</li></ol></div>
+    <div><h4>Budget calculation</h4><ol class="flow"><li>Event details entered</li><li>Deterministic Python calculation</li><li>Breakdown and approver shown</li></ol></div>
+  </div>
+  <p class="disclaimer">The application does not check live venue availability, book venues, or register participants.</p>
+</div>
+{% endblock %}

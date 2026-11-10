@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}AI Studio{% endblock %}
+{% block heading %}AI Studio{% endblock %}
+{% block subheading %}Generate plans, schedules, checklists and letters. Output follows the language selected at the top right.{% endblock %}
+
+{% macro type_select(id="event_type") %}
+<select id="{{ id }}" name="event_type" required>
+  <option value="">Choose event type…</option>
+  {% for t in event_types %}<option>{{ t }}</option>{% endfor %}
+</select>
+{% endmacro %}
+
+{% block content %}
+<div class="tabs" role="tablist" aria-label="AI tools">
+  {% for key, label in [('plan','Event Planner'),('names','Name Generator'),('description','Description'),('schedule','Schedule'),('checklist','Checklist'),('letter','Permission Letter'),('budget','Budget Optimizer')] %}
+  <button type="button" class="tab" role="tab" id="tab-{{ key }}" data-tab="{{ key }}" aria-controls="panel-{{ key }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ label }}</button>
+  {% endfor %}
+</div>
+
+<!-- PLANNER -->
+<section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan">
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>AI Event Planner</h2><p>Describe your event and get a complete plan with team roles and estimated expenses.</p></div>
+      <form class="ai-form" data-kind="plan" data-endpoint="/api/ai/plan" novalidate>
+        <div class="form-row"><label>Event type</label>{{ type_select() }}</div>
+        <div class="form-row"><label>Event name</label><input name="name" maxlength="100" required placeholder="e.g. CodeSprint 2026"></div>
+        <div class="two"><div class="form-row"><label>Participants</label><input name="participants" type="number" min="1" required placeholder="100"></div>
+          <div class="form-row"><label>Budget (INR)</label><input name="budget" type="number" min="0" step="0.01" required placeholder="25000"></div></div>
+        <div class="two"><div class="form-row"><label>Duration (hours)</label><input name="duration_hours" type="number" min="1" max="72" required placeholder="6"></div>
+          <div class="form-row"><label>Venue preference</label><input name="venue" maxlength="100" required placeholder="Seminar Hall"></div></div>
+        <div class="form-row"><label>Event description</label><textarea name="description" rows="3" maxlength="1000" required placeholder="What is the event about?"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate event plan</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Result</h2></div><div class="result" data-result="plan"><div class="empty-state small"><p>Your event plan will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- NAMES -->
+<section class="panel" id="panel-names" role="tabpanel" aria-labelledby="tab-names" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>Event Name Generator</h2><p>Get creative, professional names for your event.</p></div>
+      <form class="ai-form" data-kind="names" data-endpoint="/api/ai/names" novalidate>
+        <div class="form-row"><label>Event category</label>{{ type_select() }}</div>
+        <div class="form-row"><label>Theme or keywords <small>(optional)</small></label><input name="theme" maxlength="150" placeholder="AI, sustainability, retro gaming…"></div>
+        <div class="form-row"><label>Department <small>(optional)</small></label><input name="department" maxlength="100" placeholder="Computer Science"></div>
+        <div class="form-row"><label>How many names</label><input name="count" type="number" min="3" max="12" value="8"></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate names</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Result</h2></div><div class="result" data-result="names"><div class="empty-state small"><p>Name ideas will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- DESCRIPTION -->
+<section class="panel" id="panel-description" role="tabpanel" aria-labelledby="tab-description" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>Event Description Generator</h2><p>Write a polished description for posters, WhatsApp or the website.</p></div>
+      <form class="ai-form" data-kind="description" data-endpoint="/api/ai/description" novalidate>
+        <div class="form-row"><label>Event name</label><input name="name" maxlength="100" required></div>
+        <div class="form-row"><label>Event type</label>{{ type_select() }}</div>
+        <div class="form-row"><label>Target audience <small>(optional)</small></label><input name="audience" maxlength="150" placeholder="First and second year engineering students"></div>
+        <div class="form-row"><label>Tone</label><select name="tone"><option value="professional">Professional</option><option value="exciting">Exciting</option><option value="formal">Formal</option><option value="friendly">Friendly</option></select></div>
+        <div class="form-row"><label>Key details <small>(optional)</small></label><textarea name="details" rows="3" maxlength="800" placeholder="Prizes, topics, rules you want mentioned"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate description</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Result</h2></div><div class="result" data-result="description"><div class="empty-state small"><p>Your description will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- SCHEDULE -->
+<section class="panel" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>Schedule Generator</h2><p>Generate a time-based schedule, then edit, add or remove rows.</p></div>
+      <form class="ai-form" data-kind="schedule" data-endpoint="/api/ai/schedule" novalidate>
+        <div class="form-row"><label>Event name</label><input name="name" maxlength="100" required></div>
+        <div class="form-row"><label>Event type</label>{{ type_select() }}</div>
+        <div class="two"><div class="form-row"><label>Start time</label><input name="start_time" type="time" value="09:00" required></div>
+          <div class="form-row"><label>Duration (hours)</label><input name="duration_hours" type="number" min="1" max="24" required placeholder="7"></div></div>
+        <div class="form-row"><label>Participants <small>(optional)</small></label><input name="participants" type="number" min="1" placeholder="100"></div>
+        <div class="form-row"><label>Notes <small>(optional)</small></label><textarea name="notes" rows="2" maxlength="500" placeholder="e.g. lunch at 1 PM, one guest session"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate schedule</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Schedule</h2></div><div class="result" data-result="schedule"><div class="empty-state small"><p>Your schedule will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section class="panel" id="panel-checklist" role="tabpanel" aria-labelledby="tab-checklist" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>Smart Checklist</h2><p>Tasks to complete before, during and after your event.</p></div>
+      <form class="ai-form" data-kind="checklist" data-endpoint="/api/ai/checklist" novalidate>
+        <div class="form-row"><label>Event name</label><input name="name" maxlength="100" required></div>
+        <div class="form-row"><label>Event type</label>{{ type_select() }}</div>
+        <div class="form-row"><label>Participants <small>(optional)</small></label><input name="participants" type="number" min="1" placeholder="100"></div>
+        <div class="form-row"><label>Notes <small>(optional)</small></label><textarea name="notes" rows="2" maxlength="500"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate checklist</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Checklist</h2></div><div class="result" data-result="checklist"><div class="empty-state small"><p>Your checklist will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- LETTER -->
+<section class="panel" id="panel-letter" role="tabpanel" aria-labelledby="tab-letter" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>Permission Letter Generator</h2><p>Only the details you enter are used. Nothing is invented.</p></div>
+      <form class="ai-form" data-kind="letter" data-endpoint="/api/ai/letter" novalidate>
+        <div class="form-row"><label>Letter to</label><select name="recipient" required>{% for key, label in recipients.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+        <div class="form-row"><label>Event name</label><input name="event_name" maxlength="100" required></div>
+        <div class="form-row"><label>Event type</label>{{ type_select() }}</div>
+        <div class="two"><div class="form-row"><label>Event date <small>(optional)</small></label><input name="event_date" type="date"></div>
+          <div class="form-row"><label>Venue <small>(optional)</small></label><input name="venue" maxlength="100"></div></div>
+        <div class="two"><div class="form-row"><label>Your name</label><input name="sender_name" maxlength="80" required></div>
+          <div class="form-row"><label>Department</label><input name="department" maxlength="100" required></div></div>
+        <div class="form-row"><label>College name <small>(optional)</small></label><input name="college" maxlength="120"></div>
+        <div class="form-row"><label>Purpose and details <small>(optional)</small></label><textarea name="details" rows="3" maxlength="800" placeholder="What are you requesting? e.g. permission to use the Seminar Hall"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Generate letter</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Letter</h2></div><div class="result" data-result="letter"><div class="empty-state small"><p>Your letter will appear here.</p></div></div></div>
+  </div>
+</section>
+
+<!-- BUDGET OPTIMIZER -->
+<section class="panel" id="panel-budget" role="tabpanel" aria-labelledby="tab-budget" hidden>
+  <div class="split">
+    <div class="card"><div class="card-head"><h2>AI Budget Optimizer</h2><p>Get a suggested split across venue, food, decoration, equipment, guests, transport and an emergency reserve. Adjust any amount afterwards.</p></div>
+      <form class="ai-form" data-kind="budget" data-endpoint="/api/ai/budget" novalidate>
+        <div class="form-row"><label>Event type</label>{{ type_select("budget_type") }}</div>
+        <div class="two"><div class="form-row"><label>Participants</label><input name="participants" type="number" min="1" required placeholder="100"></div>
+          <div class="form-row"><label>Total budget (INR)</label><input name="budget" type="number" min="0" step="0.01" required placeholder="25000"></div></div>
+        <div class="two"><div class="form-row"><label>Duration (hours)</label><input name="duration_hours" type="number" min="1" max="72" required placeholder="6"></div>
+          <div class="form-row"><label>Venue <small>(optional)</small></label><input name="venue" maxlength="100" placeholder="Seminar Hall"></div></div>
+        <div class="form-row"><label>Description <small>(optional)</small></label><textarea name="description" rows="3" maxlength="500"></textarea></div>
+        <div class="field-error" role="alert" hidden></div>
+        <button type="submit" class="btn primary block"><svg><use href="#i-spark"/></svg><span class="lbl">Suggest budget split</span></button>
+      </form></div>
+    <div class="card result-card"><div class="card-head"><h2>Budget split</h2></div><div class="result" data-result="budget"><div class="empty-state small"><p>Your budget split will appear here.</p></div></div></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/budget_opt.js') }}"></script><script src="{{ url_for('static', filename='js/studio.js') }}"></script>{% endblock %}

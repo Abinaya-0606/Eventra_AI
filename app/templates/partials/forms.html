@@ -1,0 +1,14 @@
+{# Reusable form pieces. Import with:  {% from "partials/forms.html" import input_row, csrf_field with context %} #}
+{% macro csrf_field() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro input_row(name, label, type="text", required=True, autocomplete="off", hint="", minlength=0, maxlength=0, value=None) %}
+{% set shown = value if value is not none else (form.get(name, '') if form else '') %}
+<div class="form-row">
+  <label for="{{ name }}">{{ label }}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" autocomplete="{{ autocomplete }}"
+         {% if type != "password" %}value="{{ shown }}"{% endif %}
+         {% if required %}required{% endif %}{% if minlength %} minlength="{{ minlength }}"{% endif %}{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+         {% if field == name %}class="invalid" aria-invalid="true" autofocus{% endif %}>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+</div>
+{% endmacro %}

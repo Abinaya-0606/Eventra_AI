@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "partials/status.html" import status_pill %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Hello, {{ current_user.name.split()[0] }}{% endblock %}
+{% block subheading %}Here is where your events stand.{% endblock %}
+{% block content %}
+<div class="dash-actions">
+  <a class="btn primary" href="{{ url_for('events.create_event') }}"><svg><use href="#i-plus"/></svg>Create event</a>
+  <a class="btn soft" href="{{ url_for('ai.studio') }}"><svg><use href="#i-spark"/></svg>AI Studio</a>
+  <a class="btn soft" href="{{ url_for('chat.assistant') }}"><svg><use href="#i-chat"/></svg>Ask the assistant</a>
+</div>
+
+<div class="stats">
+  <a class="stat" href="{{ url_for('events.list_events') }}"><span>Total events</span><strong>{{ stats.total }}</strong></a>
+  <a class="stat" href="{{ url_for('events.calendar_view') }}"><span>Upcoming events</span><strong>{{ stats.upcoming }}</strong></a>
+  <a class="stat" href="{{ url_for('events.list_events', status='completed') }}"><span>Completed events</span><strong>{{ stats.completed }}</strong></a>
+  <div class="stat"><span>Total estimated budget</span><strong>{{ "₹{:,.0f}".format(stats.budget) }}</strong></div>
+  <a class="stat" href="{{ url_for('tasks.list_tasks') }}"><span>Pending tasks</span><strong>{{ pending_tasks }}</strong></a>
+  <a class="stat" href="{{ url_for('events.list_events', status='pending') }}"><span>Pending approval</span><strong>{{ stats.awaiting_approval }}</strong></a>
+</div>
+
+<section class="card tracker-card" aria-labelledby="tracker-h">
+  <div class="card-head row"><div><h2 id="tracker-h">Approval tracker</h2><p>Drafts are private. Approved events become visible to students.</p></div></div>
+  <div class="tracker">
+    {% for key, label in [('draft', 'Draft'), ('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')] %}
+    <a class="trk st-{{ key }}" href="{{ url_for('events.list_events', status=key) }}"><strong>{{ tracker.get(key, 0) }}</strong><span>{{ label }}</span></a>
+    {% endfor %}
+  </div>
+  {% for e in rejected %}
+  <div class="note bad reject-note"><b>{{ e.name }} was rejected:</b> {{ e.admin_note or 'No reason was given.' }}
+    <a class="link" href="{{ url_for('events.edit_event', event_id=e.id) }}">Correct and resubmit</a></div>
+  {% endfor %}
+</section>
+
+<div class="dash-grid">
+  <section class="card">
+    <div class="card-head row"><h2>Upcoming events</h2><a href="{{ url_for('events.list_events') }}" class="link">View all</a></div>
+    {% for e in upcoming %}
+    <a class="list-row" href="{{ url_for('events.detail', event_id=e.id) }}">
+      <span class="date-chip"><b>{{ e.event_date[8:] }}</b>{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][e.event_date[5:7]|int - 1] }}</span>
+      <span class="grow"><b>{{ e.name }}</b><small class="muted">{{ e.event_type }}{% if e.venue %} · {{ e.venue }}{% endif %}</small></span>
+      {{ status_pill(e.status, e.status|capitalize if e.status != 'pending' else 'Pending') }}
+    </a>
+    {% else %}
+    <div class="empty-state small"><h3>No upcoming events</h3><p>Create your first event to see it here.</p><a class="btn primary" href="{{ url_for('events.create_event') }}">Create event</a></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <div class="card-head row"><h2>Pending tasks</h2><a href="{{ url_for('tasks.list_tasks') }}" class="link">View all</a></div>
+    {% for t in task_list %}
+    <a class="list-row" href="{{ url_for('events.detail', event_id=t.event_id) }}#tasks">
+      <span class="grow"><b>{{ t.title }}</b><small class="muted">{{ t.event_name }}</small></span>
+      {% if t.deadline %}<small class="{{ 'overdue' if t.deadline < today else 'muted' }}">{{ 'Overdue · ' if t.deadline < today }}{{ t.deadline }}</small>{% endif %}
+    </a>
+    {% else %}
+    <div class="empty-state small"><h3>You are all caught up</h3><p>Tasks you add to your events show up here.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card wide">
+    <div class="card-head"><h2>Recent activities</h2></div>
+    {% for a in feed %}
+    <div class="feed-row"><span class="dot-sm"></span><span class="grow">{{ a.message }}{% if a.actor_name and a.user_id != current_user.id %} <small class="muted">by {{ a.actor_name }}</small>{% endif %}</span><small class="muted">{{ a.created_at[:16].replace('T', ' ') }} UTC</small></div>
+    {% else %}
+    <div class="empty-state small"><p>Your activity will appear here as you create and manage events.</p></div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

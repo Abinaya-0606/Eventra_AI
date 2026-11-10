@@ -1,0 +1,5 @@
+{% macro status_pill(status, label) %}<span class="st st-{{ status }}">{{ label }}</span>{% endmacro %}
+{% macro progress(event) %}
+{% if event.task_total %}<div class="progress" title="{{ event.task_done }} of {{ event.task_total }} tasks done"><div style="width:{{ event.progress }}%"></div></div><small class="muted">{{ event.task_done }}/{{ event.task_total }} tasks · {{ event.progress }}%</small>
+{% else %}<small class="muted">No tasks yet</small>{% endif %}
+{% endmacro %}

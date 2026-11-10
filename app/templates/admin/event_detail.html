@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% from "partials/status.html" import status_pill %}
+{% block title %}{{ event.name }}{% endblock %}
+{% block heading %}{{ event.name }}{% endblock %}
+{% block subheading %}{{ event.event_type }} · {{ event.event_date }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="ev-top">
+    <div>{{ status_pill(event.status, status_label) }}</div>
+    <div class="ev-actions"><a class="btn soft sm nomt" href="{{ url_for('admin.approvals') }}">← Event approvals</a>
+      <a class="btn soft sm nomt" href="{{ url_for('events.detail', event_id=event.id) }}">Full event page</a></div>
+  </div>
+  {% if event.admin_note and event.status in ('rejected', 'draft', 'pending') %}<div class="note bad"><b>{{ 'Rejected' if event.status == 'rejected' else 'Previously rejected' }}:</b> {{ event.admin_note }}</div>{% endif %}
+  <dl class="facts">
+    <div><dt>Date & time</dt><dd>{{ event.event_date }} · {{ event.start_time }}</dd></div>
+    <div><dt>Duration</dt><dd>{{ event.duration_hours }} hour{{ '' if event.duration_hours == 1 else 's' }}</dd></div>
+    <div><dt>Venue</dt><dd>{{ event.venue or '—' }}</dd></div>
+    <div><dt>Capacity</dt><dd>{{ event.participants }} <small class="muted">({{ event.registered_count }} registered)</small></dd></div>
+    <div><dt>Estimated budget</dt><dd>{{ "₹{:,.2f}".format(event.budget) }}</dd></div>
+    <div><dt>Submitted</dt><dd>{{ (event.submitted_at or '')[:16].replace('T', ' ') or '—' }}</dd></div>
+  </dl>
+  {% if event.description %}<p class="ev-desc">{{ event.description }}</p>{% endif %}
+</div>
+
+<section class="card sect">
+  <div class="card-head row"><div><h2>Organizer</h2><p>Who submitted this event.</p></div></div>
+  <dl class="facts">
+    <div><dt>Name</dt><dd>{{ organizer.name }}</dd></div>
+    <div><dt>Email</dt><dd>{{ organizer.email }}</dd></div>
+    <div><dt>Department</dt><dd>{{ organizer.department or '—' }}</dd></div>
+    <div><dt>Member since</dt><dd>{{ organizer.created_at[:10] }}</dd></div>
+    <div><dt>Their events</dt><dd>{{ owner_stats.values()|sum }} <small class="muted">({{ owner_stats.get('approved', 0) }} approved, {{ owner_stats.get('rejected', 0) }} rejected)</small></dd></div>
+    <div><dt>Account</dt><dd>{{ 'Active' if organizer.is_active else 'Deactivated' }}</dd></div>
+  </dl>
+</section>
+
+{% if event.status == 'pending' %}
+<section class="card sect" id="decision">
+  <div class="card-head row"><div><h2>Decision</h2><p>Approving makes the event visible to students. A rejection needs a reason the organizer will see.</p></div></div>
+  {% if can_review %}
+  <div class="review-row">
+    <form method="post" action="{{ url_for('admin.approve_event', event_id=event.id) }}" class="inline">{{ csrf_field() }}<input type="hidden" name="next" value="{{ url_for('admin.approvals') }}"><button class="btn primary" type="submit">Approve event</button></form>
+    <form method="post" action="{{ url_for('admin.reject_event', event_id=event.id) }}" class="reject-form">{{ csrf_field() }}<input type="hidden" name="next" value="{{ url_for('admin.approvals') }}">
+      <label for="note">Reject this event</label><textarea id="note" name="note" rows="2" maxlength="300" required placeholder="Tell the organizer why (required)"></textarea>
+      <button class="btn soft sm danger" type="submit">Reject event</button></form>
+  </div>
+  {% else %}
+  <div class="note info">You are associated with this event (as its creator or a task assignee), so another admin must review it.</div>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card sect">
+  <div class="card-head row"><div><h2>Review history</h2><p>Every approve / reject decision on this event, newest first.</p></div></div>
+  {% for r in history %}
+  <div class="feed-row"><span class="dot-sm"></span><span class="grow"><b>{{ r.decision|capitalize }}</b>{% if r.reviewer_name %} by {{ r.reviewer_name }}{% endif %}{% if r.reason %} — {{ r.reason }}{% endif %}</span><small class="muted">{{ r.created_at[:16].replace('T', ' ') }}</small></div>
+  {% else %}<div class="empty-state small"><p>No decisions yet.</p></div>{% endfor %}
+</section>
+
+<section class="card sect">
+  <div class="card-head row"><div><h2>Schedule</h2></div></div>
+  {% for it in schedule %}<div class="list-row"><span class="grow"><b>{{ it.start_time }} · {{ it.title }}</b>{% if it.description %}<small class="muted">{{ it.description }}</small>{% endif %}</span></div>
+  {% else %}<div class="empty-state small"><p>The organizer has not saved a schedule yet.</p></div>{% endfor %}
+</section>
+{% endblock %}

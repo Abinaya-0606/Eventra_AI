@@ -1,0 +1,11 @@
+{# One event card. Needs: e (event with registered_count, is_registered) #}
+{% set left = e.participants - e.registered_count %}
+{% set pct = (100 * e.registered_count / e.participants)|round|int if e.participants else 0 %}
+<a class="ev-card" href="{{ url_for('student.event_detail', event_id=e.id) }}">
+  <span class="type-tag">{{ e.event_type }}</span>
+  <h3>{{ e.name }}</h3>
+  <div class="meta-line"><span>{{ e.event_date }} · {{ e.start_time }}</span>{% if e.venue %}<span>{{ e.venue }}</span>{% endif %}<span>by {{ e.owner_name }}</span></div>
+  <div class="cap {{ 'full' if left <= 0 else ('warm' if pct >= 80 else '') }}" role="img" aria-label="{{ e.registered_count }} of {{ e.participants }} seats taken"><div style="width:{{ [pct, 100]|min }}%"></div></div>
+  <div class="foot"><span class="cap-text">{{ 'Full' if left <= 0 else (left ~ ' seat' ~ ('' if left == 1 else 's') ~ ' left') }}</span>
+    {% if e.is_registered %}<span class="pill ok">Registered</span>{% elif left <= 0 %}<span class="pill bad">Full</span>{% else %}<span class="pill info">Open</span>{% endif %}</div>
+</a>

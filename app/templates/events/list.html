@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "partials/status.html" import status_pill, progress %}
+{% from "partials/pagination.html" import pager %}
+{% block title %}My Events{% endblock %}
+{% block heading %}{{ 'All events' if current_user.is_admin else 'My Events' }}{% endblock %}
+{% block subheading %}Search, filter and open any event.{% endblock %}
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('events.list_events') }}" role="search">
+  <div><label class="sr" for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by name or venue…" maxlength="100"></div>
+  <div><label class="sr" for="status">Status</label><select id="status" name="status"><option value="">All statuses</option>{% for key, label in statuses.items() %}<option value="{{ key }}" {{ 'selected' if key == status }}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label class="sr" for="type">Type</label><select id="type" name="type"><option value="">All types</option>{% for t in event_types %}<option {{ 'selected' if t == etype }}>{{ t }}</option>{% endfor %}</select></div>
+  <button class="btn soft" type="submit">Filter</button>
+  <a class="btn primary" href="{{ url_for('events.create_event') }}"><svg><use href="#i-plus"/></svg>New event</a>
+</form>
+
+{% if events %}
+<div class="card table-wrap">
+  <table class="table events">
+    <thead><tr><th>Event</th><th>Date</th><th>Status</th><th>Budget</th><th>Progress</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td><a class="row-link" href="{{ url_for('events.detail', event_id=e.id) }}"><b>{{ e.name }}</b></a><small class="muted block">{{ e.event_type }}{% if e.venue %} · {{ e.venue }}{% endif %}{% if current_user.is_admin %} · by {{ e.owner_name }}{% endif %}</small></td>
+        <td>{{ e.event_date }}</td>
+        <td>{{ status_pill(e.status, statuses[e.status]) }}</td>
+        <td>{{ "₹{:,.0f}".format(e.budget) }}</td>
+        <td class="prog">{{ progress(e) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="muted count">{{ total }} event{{ '' if total == 1 else 's' }}</p>
+{{ pager('events.list_events', page, pages) }}
+{% else %}
+<div class="card empty-state">
+  {% if q or status or etype %}<h2>No events match your filters</h2><p>Try a different search or clear the filters.</p><a class="btn soft" href="{{ url_for('events.list_events') }}">Clear filters</a>
+  {% else %}<h2>No events yet</h2><p>Create your first event and let the AI help you plan it.</p><a class="btn primary" href="{{ url_for('events.create_event') }}">Create your first event</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

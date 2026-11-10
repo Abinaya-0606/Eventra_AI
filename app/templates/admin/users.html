@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block subheading %}{{ subtitle }}{% endblock %}
+{% block content %}
+<div class="tabs" role="tablist" aria-label="People">
+  <a class="tab" href="{{ url_for('admin.user_list') }}" aria-selected="{{ 'true' if endpoint == 'admin.user_list' else 'false' }}">All users</a>
+  <a class="tab" href="{{ url_for('admin.admin_list') }}" aria-selected="{{ 'true' if endpoint == 'admin.admin_list' else 'false' }}">Admins</a>
+  <a class="tab" href="{{ url_for('admin.organizer_list') }}" aria-selected="{{ 'true' if endpoint == 'admin.organizer_list' else 'false' }}">Organizers</a>
+  <a class="tab" href="{{ url_for('admin.student_list') }}" aria-selected="{{ 'true' if endpoint == 'admin.student_list' else 'false' }}">Students</a>
+</div>
+
+<details class="card sect add-user"{% if error %} open{% endif %}>
+  <summary><svg aria-hidden="true"><use href="#i-plus"/></svg> Add a user</summary>
+  {% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('admin.create_user') }}" class="grid-form">{{ csrf_field() }}
+    <input type="hidden" name="source" value="{{ endpoint }}">
+    <div class="form-row"><label for="nu-name">Name</label><input id="nu-name" name="name" maxlength="80" required value="{{ form.get('name', '') }}"></div>
+    <div class="form-row"><label for="nu-email">Email</label><input id="nu-email" name="email" type="email" maxlength="254" required value="{{ form.get('email', '') }}"></div>
+    <div class="form-row"><label for="nu-pass">Password</label><input id="nu-pass" name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"><small>Admin accounts need at least 10 characters.</small></div>
+    <div class="form-row"><label for="nu-dept">Department <small>(optional)</small></label><input id="nu-dept" name="department" maxlength="100" value="{{ form.get('department', '') }}"></div>
+    <div class="form-row"><label for="nu-role">Role</label><select id="nu-role" name="role">{% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == (form.get('role') or role_filter or 'student') }}>{{ r|capitalize }}</option>{% endfor %}</select></div>
+    <div class="form-row"><button class="btn primary" type="submit">Create account</button></div>
+  </form>
+</details>
+
+<div class="table-tools"><label class="sr" for="user-filter">Filter people</label><input id="user-filter" type="search" placeholder="Filter by name, email or department…" data-filter-table="users-table"><span class="muted">{{ people|length }} account{{ '' if people|length == 1 else 's' }}</span></div>
+<div class="card table-wrap">
+  <table class="table users" id="users-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Activity</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+    {% for u in people %}
+      <tr>
+        <td>{{ u.name }}{% if u.id == current_user.id %} <small>(you)</small>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.department or '—' }}</td>
+        <td>
+          {% if u.id == current_user.id %}<span class="badge {{ u.role }}">{{ u.role|capitalize }}</span>
+          {% else %}
+          <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="inline">{{ csrf_field() }}<input type="hidden" name="next" value="{{ request.path }}">
+            <select name="role" aria-label="Role for {{ u.name }}" onchange="this.form.submit()">{% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == u.role }}>{{ r|capitalize }}</option>{% endfor %}</select>
+            <noscript><button class="btn soft sm">Save</button></noscript></form>
+          {% endif %}
+        </td>
+        <td><small class="muted">{% if u.role == 'student' %}{{ u.registration_count }} registration{{ '' if u.registration_count == 1 else 's' }}{% elif u.role == 'organizer' %}{{ u.event_count }} event{{ '' if u.event_count == 1 else 's' }} · {{ u.approved_count }} approved{% else %}—{% endif %}</small></td>
+        <td><span class="pill {{ 'ok' if u.is_active else 'bad' }}">{{ 'Active' if u.is_active else 'Deactivated' }}</span></td>
+        <td>{{ u.created_at[:10] }}</td>
+        <td>{% if u.id != current_user.id %}<form method="post" action="{{ url_for('admin.toggle_active', user_id=u.id) }}" class="inline">{{ csrf_field() }}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn soft sm nomt" type="submit">{{ 'Deactivate' if u.is_active else 'Activate' }}</button></form>{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="muted">No accounts here yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

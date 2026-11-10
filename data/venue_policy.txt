@@ -1,0 +1,7 @@
+The Seminar Hall holds 100 participants and costs INR 3,000 per event.
+
+The Auditorium holds 300 participants and costs INR 8,000 per event.
+
+A proposal must not exceed the selected venue's capacity.
+
+The assistant cannot confirm live venue availability.

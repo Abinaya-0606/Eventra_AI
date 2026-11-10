@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Budget Calculator{% endblock %}
+{% block heading %}Budget Calculator{% endblock %}
+{% block subheading %}Exact calculation done by the Python backend, not by AI.{% endblock %}
+{% block content %}
+<div class="split">
+  <div class="card">
+    <div class="card-head"><h2>Event details</h2><p>Enter your event details to estimate the cost and find the required approver.</p></div>
+    <form id="budget-form" novalidate data-venues='{{ venues|tojson }}'>
+      <div class="form-row">
+        <label for="venue">Venue</label>
+        <select id="venue">{% for key, v in venues.items() %}<option value="{{ key }}">{{ v.label }}</option>{% endfor %}</select>
+        <div class="venue-info" id="venue-info" aria-live="polite"></div>
+      </div>
+      <div class="form-row">
+        <label for="participants">Number of participants</label>
+        <input id="participants" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g. 50" aria-describedby="participants-help">
+        <small id="participants-help">Must be a whole number within the venue capacity.</small>
+      </div>
+      <label class="toggle"><input type="checkbox" id="refreshments"><span class="switch" aria-hidden="true"></span><span>Refreshments <em>INR 80 per participant</em></span></label>
+      <label class="toggle"><input type="checkbox" id="kits"><span class="switch" aria-hidden="true"></span><span>Participation kits <em>INR 120 per participant</em></span></label>
+      <div class="field-error" id="budget-error" role="alert" hidden></div>
+      <button type="submit" class="btn primary block" id="calc">Calculate Budget</button>
+    </form>
+  </div>
+
+  <div class="card" aria-live="polite">
+    <div class="card-head"><h2>Estimate</h2></div>
+    <div id="result-empty" class="empty-state small"><p>Your budget breakdown will appear here.</p></div>
+    <div id="result" hidden>
+      <div class="total-card"><span>Final Estimated Total</span><strong id="r-total"></strong></div>
+      <table class="table breakdown">
+        <tr><th scope="row">Venue Cost</th><td id="r-venue"></td></tr>
+        <tr><th scope="row">Refreshment Cost</th><td id="r-ref"></td></tr>
+        <tr><th scope="row">Participation Kit Cost</th><td id="r-kit"></td></tr>
+        <tr><th scope="row">Subtotal</th><td id="r-sub"></td></tr>
+        <tr><th scope="row">Contingency (10%)</th><td id="r-con"></td></tr>
+      </table>
+      <div class="approver" id="approver-box"><span>Required Approval Authority</span><strong id="r-approver"></strong></div>
+      <p class="disclaimer">This is an estimated budget. Actual expenses may vary.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/budget.js') }}"></script>{% endblock %}

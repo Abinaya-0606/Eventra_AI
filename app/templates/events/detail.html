@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "partials/status.html" import status_pill, progress %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}{{ event.name }}{% endblock %}
+{% block heading %}{{ event.name }}{% endblock %}
+{% block subheading %}{{ event.event_type }} · {{ event.event_date }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="ev-top">
+    <div>{{ status_pill(event.status, status_label) }}{% if current_user.is_admin and event.owner_id != current_user.id %} <small class="muted">Organizer: {{ event.owner_name }}</small>{% endif %}</div>
+    <div class="ev-actions">
+      {% for action, label in actions if action != 'reject' %}
+      <form method="post" action="{{ url_for('events.change_status', event_id=event.id) }}" class="inline">{{ csrf_field() }}<input type="hidden" name="action" value="{{ action }}">
+        <button class="btn {{ 'primary' if action in ('submit', 'approve') else 'soft' }} sm nomt" type="submit">{{ label }}</button></form>
+      {% endfor %}
+      {% if event.status in ('approved', 'completed') %}<a class="btn soft sm nomt" href="{{ url_for('events.event_registrations', event_id=event.id) }}"><svg><use href="#i-users"/></svg>Registrations ({{ event.registered_count }})</a>{% endif %}
+      <a class="btn soft sm nomt" href="{{ url_for('analytics.event_report_pdf', event_id=event.id) }}"><svg><use href="#i-download"/></svg>Report PDF</a>
+      {% if can_edit %}<a class="btn soft sm nomt" href="{{ url_for('events.edit_event', event_id=event.id) }}">Edit</a>{% endif %}
+      {% if can_delete %}<form method="post" action="{{ url_for('events.delete_event', event_id=event.id) }}" class="inline" data-confirm="Delete this event and all its tasks and schedule? This cannot be undone.">{{ csrf_field() }}<button class="btn soft sm nomt danger" type="submit">Delete</button></form>{% endif %}
+    </div>
+  </div>
+
+  {% if event.status == 'rejected' and event.admin_note %}<div class="note bad"><b>Rejected:</b> {{ event.admin_note }}{% if can_edit %} <a class="link" href="{{ url_for('events.edit_event', event_id=event.id) }}">Edit and resubmit</a>{% endif %}</div>
+  {% elif event.status in ('draft', 'pending') and event.admin_note and current_user.id == event.owner_id %}<div class="note bad"><b>Previously rejected:</b> {{ event.admin_note }}</div>{% endif %}
+  {% if actions|selectattr(0, 'equalto', 'reject')|list %}
+  <form method="post" action="{{ url_for('events.change_status', event_id=event.id) }}" class="reject-form">{{ csrf_field() }}<input type="hidden" name="action" value="reject">
+    <label for="note">Reject this event</label><textarea id="note" name="note" rows="2" maxlength="300" placeholder="Tell the organizer why (required)"></textarea>
+    <button class="btn soft sm danger" type="submit">Reject</button></form>
+  {% endif %}
+
+  <dl class="facts">
+    <div><dt>Date & time</dt><dd>{{ event.event_date }} · {{ event.start_time }}</dd></div>
+    <div><dt>Duration</dt><dd>{{ event.duration_hours }} hour{{ '' if event.duration_hours == 1 else 's' }}</dd></div>
+    <div><dt>Venue</dt><dd>{{ event.venue or '—' }}</dd></div>
+    <div><dt>Capacity</dt><dd>{{ event.participants }} <small class="muted">({{ event.registered_count }} registered)</small></dd></div>
+    <div><dt>Estimated budget</dt><dd>{{ "₹{:,.2f}".format(event.budget) }}</dd></div>
+    <div><dt>Progress</dt><dd>{{ progress(event) }}</dd></div>
+  </dl>
+  {% if event.description %}<p class="ev-desc">{{ event.description }}</p>{% endif %}
+</div>
+
+{% if event.status in ('approved', 'completed') %}
+<section class="card sect" id="registrations">
+  <div class="card-head row"><div><h2>Registered students</h2><p>{{ event.registered_count }} of {{ event.participants }} seats taken</p></div>
+    <a class="btn soft sm nomt" href="{{ url_for('events.event_registrations', event_id=event.id) }}">View all</a></div>
+  {% for r in reg_preview %}<div class="list-row"><span class="grow"><b>{{ r.name }}</b><small class="muted">{{ r.email }}{% if r.department %} · {{ r.department }}{% endif %}</small></span><small class="muted">{{ r.created_at[:10] }}</small></div>
+  {% else %}<div class="empty-state small"><p>No students have registered yet.</p></div>{% endfor %}
+</section>
+{% elif event.status == 'pending' %}
+<div class="note info sect-note">{{ 'This event is waiting for your review.' if current_user.is_admin and event.owner_id != current_user.id else 'Submitted for approval. Students will see it once an admin approves it.' }}</div>
+{% elif event.status == 'draft' %}
+<div class="note info sect-note">This event is a draft and is private. Submit it for approval when it is ready.</div>
+{% endif %}
+
+<section class="card sect" id="ai-tools">
+  <div class="card-head row"><div><h2>AI planning tools</h2><p>Budget optimizer, venue recommendation, risk analysis, improvement ideas and a printable proposal.</p></div>
+    <a class="btn primary" href="{{ url_for('planning.tools', event_id=event.id) }}"><svg><use href="#i-spark"/></svg>Open AI tools</a></div>
+</section>
+
+<section class="card sect" id="schedule">
+  <div class="card-head row"><div><h2>Schedule</h2><p>{{ 'Edit rows, generate one with AI, then save.' if can_manage else 'The saved event schedule.' }}</p></div></div>
+  <div id="schedule-editor" data-event-id="{{ event.id }}" data-can-manage="{{ 'true' if can_manage else 'false' }}"
+       data-items='{{ schedule|tojson }}'
+       data-event='{{ {"name": event.name, "event_type": event.event_type, "start_time": event.start_time, "duration_hours": event.duration_hours, "participants": event.participants}|tojson }}'></div>
+</section>
+
+<section class="card sect" id="tasks">
+  <div class="card-head row"><div><h2>Tasks</h2><p>{{ event.task_done }} of {{ event.task_total }} done</p></div></div>
+  {% for t in tasks %}
+  <div class="task-row {{ 'done' if t.status == 'done' }}">
+    <div class="grow"><b>{{ t.title }}</b>
+      <small class="muted block">{% if t.phase %}{{ t.phase|capitalize }} the event · {% endif %}{{ t.assignee_name or 'Unassigned' }}</small></div>
+    {% if t.deadline %}<small class="{{ 'overdue' if t.deadline < today and t.status != 'done' else 'muted' }}">{{ t.deadline }}</small>{% endif %}
+    <form method="post" action="{{ url_for('tasks.change_task_status', task_id=t.id) }}" class="inline">{{ csrf_field() }}
+      <input type="hidden" name="next" value="{{ url_for('events.detail', event_id=event.id) }}#tasks">
+      <select name="status" aria-label="Status of {{ t.title }}" onchange="this.form.submit()">{% for key, label in task_labels.items() %}<option value="{{ key }}" {{ 'selected' if key == t.status }}>{{ label }}</option>{% endfor %}</select>
+      <noscript><button class="btn soft sm nomt">Save</button></noscript></form>
+    {% if can_manage %}
+    <a class="btn soft sm nomt" href="{{ url_for('tasks.edit_task', task_id=t.id) }}" aria-label="Edit {{ t.title }}">Edit</a>
+    <form method="post" action="{{ url_for('tasks.delete_task', task_id=t.id) }}" class="inline" data-confirm="Delete this task?">{{ csrf_field() }}
+      <input type="hidden" name="next" value="{{ url_for('events.detail', event_id=event.id) }}#tasks"><button class="btn soft sm nomt danger" type="submit" aria-label="Delete {{ t.title }}">Delete</button></form>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state small"><h3>No tasks yet</h3><p>Add tasks below{% if can_manage %} or generate a checklist with AI{% endif %}.</p></div>
+  {% endfor %}
+
+  {% if can_manage %}
+  <form method="post" action="{{ url_for('tasks.create_task', event_id=event.id) }}" class="task-add" novalidate data-validate>{{ csrf_field() }}
+    <div class="form-row"><label for="t-title">New task</label><input id="t-title" name="title" maxlength="200" required placeholder="e.g. Book the seminar hall"></div>
+    <div class="form-row"><label for="t-assignee">Assign to <small>(email, optional)</small></label><input id="t-assignee" name="assignee_email" type="email" placeholder="{{ current_user.email }}"></div>
+    <div class="form-row"><label for="t-deadline">Deadline</label><input id="t-deadline" name="deadline" type="date"></div>
+    <button class="btn primary" type="submit">Add task</button>
+  </form>
+  <div class="ai-box">
+    <button type="button" class="btn soft" id="ai-checklist"><svg><use href="#i-spark"/></svg>Generate checklist with AI</button>
+    <div id="checklist-preview" hidden></div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/event.js') }}"></script>{% endblock %}

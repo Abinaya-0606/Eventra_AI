@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Your Smart Event Companion{% endblock %} · Eventra AI</title>
+  <meta name="description" content="Eventra AI is an intelligent AI-powered event planning and management platform that helps users organize events efficiently with smart AI assistance.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <script>(function(){try{var t=localStorage.getItem("theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+</head>
+<body data-lang="{{ current_user.language if current_user else 'en' }}">
+<a class="skip-link" href="#content" data-i18n>Skip to content</a>
+{% from "partials/forms.html" import csrf_field with context %}
+{% include "partials/icons.html" %}
+{# Separate navigation per role. The backend enforces the same split (security.BLUEPRINT_ROLES). #}
+{% set role = current_user.role if current_user else 'student' %}
+{% if role == 'admin' %}
+  {% set nav = [
+    ('admin.dashboard', 'Overview', 'i-home'),
+    ('admin.approvals', 'Event Approvals', 'i-shield'),
+    ('admin.all_events', 'All Events', 'i-event'),
+    ('admin.student_list', 'Students', 'i-user'),
+    ('admin.organizer_list', 'Organizers', 'i-users'),
+    ('admin.venue_list', 'Venues', 'i-book'),
+    ('admin.activity_log', 'Activity Logs', 'i-log'),
+    (None, 'More', None),
+    ('admin.admin_list', 'Admin Accounts', 'i-shield'),
+    ('events.calendar_view', 'Calendar', 'i-calendar'),
+    ('analytics.dashboard', 'Analytics', 'i-chart'),
+    ('notifications.inbox', 'Notifications', 'i-bell'),
+    ('chat.assistant', 'AI Assistant', 'i-chat'),
+    ('main.policies', 'Event Policies', 'i-book'),
+    ('main.about', 'About', 'i-info')] %}
+{% elif role == 'organizer' %}
+  {% set nav = [
+    ('main.dashboard', 'Dashboard', 'i-home'),
+    ('events.list_events', 'My Events', 'i-event'),
+    ('events.calendar_view', 'Calendar', 'i-calendar'),
+    ('tasks.list_tasks', 'Tasks', 'i-task'),
+    ('ai.studio', 'AI Studio', 'i-spark'),
+    ('budget.calculator', 'Budget Calculator', 'i-calc'),
+    ('analytics.dashboard', 'Analytics', 'i-chart'),
+    ('notifications.inbox', 'Notifications', 'i-bell'),
+    ('chat.assistant', 'AI Assistant', 'i-chat'),
+    ('main.policies', 'Event Policies', 'i-book'),
+    ('main.about', 'About', 'i-info')] %}
+{% else %}
+  {% set nav = [
+    ('main.dashboard', 'Dashboard', 'i-home'),
+    ('student.browse', 'Browse Events', 'i-search'),
+    ('student.my_registrations', 'My Registered Events', 'i-ticket'),
+    ('events.calendar_view', 'Calendar', 'i-calendar'),
+    ('chat.assistant', 'AI Event Assistant', 'i-chat'),
+    ('notifications.inbox', 'Notifications', 'i-bell'),
+    ('main.policies', 'Event Policies', 'i-book'),
+    ('main.about', 'About', 'i-info')] %}
+{% endif %}
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{{ url_for('admin.dashboard' if role == 'admin' else 'main.dashboard') }}" aria-label="Eventra AI: Your Smart Event Companion"><span class="logo" aria-hidden="true"><svg><use href="#i-eventra"/></svg></span><span class="brand-text"><span class="wordmark">Eventra <span class="ai">AI</span></span><small>Your Smart Event Companion</small></span></a>
+    <nav>
+      {% for endpoint, label, icon in nav %}
+      {% if endpoint is none %}<p class="nav-heading" data-i18n>{{ label }}</p>{% else %}
+      <a href="{{ url_for(endpoint) }}" class="nav-link{% if request.endpoint == endpoint %} active{% endif %}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}><svg><use href="#{{ icon }}"/></svg><span data-i18n>{{ label }}</span>{% if endpoint == 'notifications.inbox' and unread_notifications() %}<span class="nav-count" aria-label="{{ unread_notifications() }} unread">{{ unread_notifications() }}</span>{% endif %}</a>{% endif %}
+      {% endfor %}
+    </nav>
+    <p class="side-note" data-i18n>AI suggestions are estimates. Always confirm rules, venues and budgets with your college.</p>
+    <div class="user-box">
+      <a href="{{ url_for('auth.profile') }}" class="user-chip"><span class="avatar" aria-hidden="true">{{ current_user.initials }}</span><span><b>{{ current_user.name }}</b><small>{{ current_user.role|capitalize }}</small></span></a>
+      <form method="post" action="{{ url_for('admin.logout' if role == 'admin' else 'auth.logout') }}">{{ csrf_field() }}<button type="submit" class="btn logout-btn" data-logout><svg aria-hidden="true"><use href="#i-logout"/></svg><span data-i18n>Log out</span></button></form>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
+      <a class="topbar-brand" href="{{ url_for('main.dashboard') }}" aria-label="Eventra AI"><span class="logo sm" aria-hidden="true"><svg><use href="#i-eventra"/></svg></span><span class="wordmark">Eventra <span class="ai">AI</span></span></a>
+      <div class="titles"><h1>{% block heading %}{% endblock %}</h1><p>{% block subheading %}{% endblock %}</p></div>
+      <div class="top-right">
+        <button type="button" class="icon-toggle" data-theme-toggle aria-pressed="false" aria-label="Switch colour theme" title="Switch colour theme"><svg class="i-moon"><use href="#i-moon"/></svg><svg class="i-sun"><use href="#i-sun"/></svg></button>
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" class="seg-btn" data-lang="en" aria-pressed="true">English</button>
+          <button type="button" class="seg-btn" data-lang="ta" aria-pressed="false">தமிழ்</button>
+        </div>
+      </div>
+    </header>
+    <main id="content" tabindex="-1">{% include "partials/flashes.html" %}{% block content %}{% endblock %}</main>
+    <footer class="site-footer"><span class="logo xs" aria-hidden="true"><svg><use href="#i-eventra"/></svg></span><span><b class="wordmark">Eventra <span class="ai">AI</span></b> &middot; Your Smart Event Companion</span></footer>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

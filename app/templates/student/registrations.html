@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}My registered events{% endblock %}
+{% block heading %}My registered events{% endblock %}
+{% block subheading %}Events you have signed up for.{% endblock %}
+{% block content %}
+{% macro rows(items, allow_cancel) %}
+  {% for e in items %}
+  <div class="list-row">
+    <span class="date-chip"><b>{{ e.event_date[8:] }}</b>{{ ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][e.event_date[5:7]|int - 1] }}</span>
+    <span class="grow">{% if e.status == 'approved' %}<a href="{{ url_for('student.event_detail', event_id=e.id) }}"><b>{{ e.name }}</b></a>{% else %}<b>{{ e.name }}</b>{% endif %}
+      <small class="muted">{{ e.event_type }} · {{ e.start_time }}{% if e.venue %} · {{ e.venue }}{% endif %} · by {{ e.owner_name }}</small>
+      {% if e.status == 'pending' %}<small class="muted">The organizer is updating this event; it is awaiting re-approval.</small>{% endif %}</span>
+    {% if allow_cancel %}
+    <form method="post" action="{{ url_for('student.cancel', event_id=e.id) }}" class="inline" data-confirm="Cancel your registration for this event?">{{ csrf_field() }}<button class="btn soft sm nomt danger" type="submit">Cancel</button></form>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% endmacro %}
+<section class="card">
+  <div class="card-head"><h2>Upcoming</h2></div>
+  {{ rows(upcoming, true) }}
+  {% if not upcoming %}<div class="empty-state small"><h3>No upcoming registrations</h3><p>Browse approved events and register for the ones you like.</p><a class="btn primary" href="{{ url_for('student.browse') }}">Browse events</a></div>{% endif %}
+</section>
+{% if past %}
+<section class="card sect"><div class="card-head"><h2>Past events</h2></div>{{ rows(past, false) }}</section>
+{% endif %}
+{% endblock %}

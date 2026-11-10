@@ -1,0 +1,16 @@
+{% extends "base.html" if current_user else "auth_base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block subheading %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="error-page {{ 'card' if current_user }}">
+  <div class="error-code" aria-hidden="true">{{ code }}</div>
+  <h2>{{ title }}</h2>
+  <p>{{ message }}</p>
+  <div class="error-actions">
+    <button type="button" class="btn soft" onclick="history.length > 1 ? history.back() : location.assign('/')">Go back</button>
+    <a class="btn primary" href="{{ url_for('main.dashboard') }}">{{ 'Back to dashboard' if current_user else 'Go to login' }}</a>
+  </div>
+  {% if code == 500 %}<small class="muted">If this keeps happening, tell the person who runs this site what you were doing.</small>{% endif %}
+</div>
+{% endblock %}

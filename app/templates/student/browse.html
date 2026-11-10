@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "partials/pagination.html" import pager %}
+{% block title %}Browse events{% endblock %}
+{% block heading %}Browse events{% endblock %}
+{% block subheading %}Approved events open for registration.{% endblock %}
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('student.browse') }}" role="search">
+  <div><label class="sr" for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by name, venue or description…" maxlength="100"></div>
+  <div><label class="sr" for="type">Type</label><select id="type" name="type"><option value="">All types</option>{% for t in event_types %}<option {{ 'selected' if t == etype }}>{{ t }}</option>{% endfor %}</select></div>
+  <div><label class="sr" for="from">From date</label><input id="from" name="from" type="date" value="{{ date_from }}" title="From date"></div>
+  <div><label class="sr" for="to">To date</label><input id="to" name="to" type="date" value="{{ date_to }}" title="To date"></div>
+  <label class="check-item" style="margin:0"><input type="checkbox" name="open" value="1" {{ 'checked' if open_only }}><span>Seats available</span></label>
+  <label class="check-item" style="margin:0"><input type="checkbox" name="past" value="1" {{ 'checked' if include_past }}><span>Include past</span></label>
+  <button class="btn soft" type="submit">Filter</button>
+</form>
+{% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+
+{% if events %}
+<div class="event-grid">{% for e in events %}{% include "student/_card.html" %}{% endfor %}</div>
+<p class="muted count">{{ total }} event{{ '' if total == 1 else 's' }}</p>
+{{ pager('student.browse', page, pages) }}
+{% else %}
+<div class="card empty-state">
+  {% if q or etype or date_from or date_to or open_only %}<h2>No events match your filters</h2><p>Try a different search or clear the filters.</p><a class="btn soft" href="{{ url_for('student.browse') }}">Clear filters</a>
+  {% else %}<h2>No upcoming events yet</h2><p>Approved events will appear here as soon as organizers publish them.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

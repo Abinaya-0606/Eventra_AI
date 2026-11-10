@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block heading %}Calendar{% endblock %}
+{% block subheading %}{{ 'Approved events open for registration.' if public else ('Every event on the platform.' if current_user.is_admin else 'Your events by date.') }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="cal-head">
+    <a class="btn soft sm nomt" href="{{ url_for('events.calendar_view', month=prev) }}" aria-label="Previous month">←</a>
+    <h2>{{ month_name }} {{ year }}</h2>
+    <a class="btn soft sm nomt" href="{{ url_for('events.calendar_view', month=next) }}" aria-label="Next month">→</a>
+    <a class="btn soft sm nomt" href="{{ url_for('events.calendar_view') }}">Today</a>
+    {% if public %}<a class="btn soft sm nomt push" href="{{ url_for('student.browse') }}"><svg><use href="#i-search"/></svg>Browse events</a>
+    {% else %}<a class="btn primary sm nomt push" href="{{ url_for('events.create_event') }}"><svg><use href="#i-plus"/></svg>New event</a>{% endif %}
+  </div>
+  <div class="cal" role="grid" aria-label="{{ month_name }} {{ year }}">
+    {% for d in ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] %}<div class="cal-dow" role="columnheader">{{ d }}</div>{% endfor %}
+    {% for week in weeks %}{% for day in week %}
+      {% set key = day.isoformat() %}
+      <div class="cal-day{{ ' other' if day.month != month }}{{ ' today' if day == today }}" role="gridcell">
+        <span class="cal-num">{{ day.day }}</span>
+        {% for e in days.get(key, [])[:3] %}<a class="cal-ev st-{{ e.status }}" href="{{ url_for('student.event_detail', event_id=e.id) if public else url_for('events.detail', event_id=e.id) }}" title="{{ e.name }} · {{ statuses[e.status] }}">{{ e.start_time }} {{ e.name }}</a>{% endfor %}
+        {% if days.get(key, [])|length > 3 %}<small class="muted">+{{ days.get(key)|length - 3 }} more</small>{% endif %}
+      </div>
+    {% endfor %}{% endfor %}
+  </div>
+  {% if not public %}<div class="legend">{% for key, label in statuses.items() %}<span><i class="st-{{ key }}"></i>{{ label }}</span>{% endfor %}</div>{% endif %}
+</div>
+{% endblock %}

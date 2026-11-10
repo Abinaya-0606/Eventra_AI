@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Welcome{% endblock %} · Eventra AI</title>
+  <meta name="description" content="Eventra AI is an intelligent AI-powered event planning and management platform that helps users organize events efficiently with smart AI assistance.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <script>(function(){try{var t=localStorage.getItem("theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+</head>
+<body class="auth-body">
+{% include "partials/icons.html" %}
+<div class="auth-tools"><button type="button" class="icon-toggle" data-theme-toggle aria-pressed="false" aria-label="Switch colour theme" title="Switch colour theme"><svg class="i-moon"><use href="#i-moon"/></svg><svg class="i-sun"><use href="#i-sun"/></svg></button></div>
+<main class="auth-wrap">
+  <div class="auth-brand"><span class="logo lg" aria-hidden="true"><svg><use href="#i-eventra"/></svg></span><div class="brand-text"><span class="wordmark">Eventra <span class="ai">AI</span></span><small>Your Smart Event Companion</small></div></div>
+  <div class="card auth-card">
+    {% include "partials/flashes.html" %}
+    {% block content %}{% endblock %}
+  </div>
+  <p class="auth-foot">&copy; Eventra AI &middot; Your Smart Event Companion</p>
+</main>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

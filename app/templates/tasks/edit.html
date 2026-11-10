@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}Edit task{% endblock %}
+{% block heading %}Edit task{% endblock %}
+{% block subheading %}{{ task.event_name }}{% endblock %}
+{% block content %}
+<div class="card form-card">
+  {% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('tasks.edit_task', task_id=task.id) }}" novalidate data-validate>
+    {{ csrf_field() }}
+    {{ input_row("title", "Task", maxlength=200) }}
+    {{ input_row("assignee_email", "Assign to (email)", "email", required=False, hint="Leave empty for unassigned." + ("" if current_user.role != "student" else " Students can only assign to themselves.")) }}
+    {{ input_row("deadline", "Deadline", "date", required=False) }}
+    <div class="form-actions"><button class="btn primary" type="submit">Save task</button>
+      <a class="btn soft" href="{{ url_for('events.detail', event_id=task.event_id) }}#tasks">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

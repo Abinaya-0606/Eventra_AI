@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "partials/pagination.html" import pager %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% block title %}Tasks{% endblock %}
+{% block heading %}Tasks{% endblock %}
+{% block subheading %}Tasks on your events and tasks assigned to you.{% endblock %}
+{% block content %}
+<form class="filters" method="get" action="{{ url_for('tasks.list_tasks') }}" role="search">
+  <div><label class="sr" for="q">Search tasks</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Search by task or event name…" maxlength="100"></div>
+  {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  <button class="btn soft" type="submit">Search</button>{% if q %}<a class="btn soft" href="{{ url_for('tasks.list_tasks', status=status or None) }}">Clear</a>{% endif %}
+</form>
+<div class="tabs" aria-label="Filter tasks">
+  <a class="tab" href="{{ url_for('tasks.list_tasks', q=q or None) }}" {% if not status %}aria-selected="true"{% endif %}>All</a>
+  {% for key, label in labels.items() %}<a class="tab" href="{{ url_for('tasks.list_tasks', status=key, q=q or None) }}" {% if status == key %}aria-selected="true"{% endif %}>{{ label }}</a>{% endfor %}
+</div>
+{% if tasks %}
+<div class="card">
+  {% for t in tasks %}
+  <div class="task-row {{ 'done' if t.status == 'done' }}">
+    <div class="grow"><b>{{ t.title }}</b>
+      <small class="muted block"><a href="{{ url_for('events.detail', event_id=t.event_id) }}#tasks">{{ t.event_name }}</a>{% if t.assignee_name %} · {{ t.assignee_name }}{% endif %}</small></div>
+    {% if t.deadline %}<small class="{{ 'overdue' if t.deadline < today and t.status != 'done' else 'muted' }}">{{ t.deadline }}</small>{% endif %}
+    <form method="post" action="{{ url_for('tasks.change_task_status', task_id=t.id) }}" class="inline">{{ csrf_field() }}
+      <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
+      <select name="status" aria-label="Status of {{ t.title }}" onchange="this.form.submit()">{% for key, label in labels.items() %}<option value="{{ key }}" {{ 'selected' if key == t.status }}>{{ label }}</option>{% endfor %}</select>
+      <noscript><button class="btn soft sm nomt">Save</button></noscript></form>
+  </div>
+  {% endfor %}
+</div>
+{{ pager('tasks.list_tasks', page, pages) }}
+{% else %}
+<div class="card empty-state"><h2>{{ 'No tasks match your search' if q else ('No tasks here' if status else 'No tasks yet') }}</h2><p>Open an event to add tasks, or generate a checklist with AI.</p><a class="btn primary" href="{{ url_for('events.list_events') }}">Go to My Events</a></div>
+{% endif %}
+{% endblock %}

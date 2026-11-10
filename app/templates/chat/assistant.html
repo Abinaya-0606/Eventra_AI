@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant{% endblock %}
+{% block heading %}AI Assistant{% endblock %}
+{% block subheading %}Answers come from the college policy documents. Ask in English or Tamil.{% endblock %}
+{% block content %}
+<div class="card chat-card">
+  <div class="chat-head">
+    <span class="status" id="ai-status" role="status"><i class="dot"></i><span id="ai-status-text">Ready</span></span>
+    <button type="button" class="btn soft sm nomt" id="clear-chat"><svg><use href="#i-trash"/></svg>Clear conversation</button>
+  </div>
+  <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Conversation"></div>
+  <div class="chips" id="chips" aria-label="Suggested questions" data-suggested='{{ suggested|tojson }}'></div>
+  <div class="field-error" id="chat-validation" role="alert" hidden></div>
+  <form id="chat-form" class="composer" novalidate>
+    <label for="question" class="sr">Your question</label>
+    <textarea id="question" rows="1" maxlength="500" placeholder="Ask about event policies… (Enter to send, Shift+Enter for new line)"></textarea>
+    <button type="submit" class="btn primary" id="send"><svg><use href="#i-send"/></svg><span>Send</span></button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/chat.js') }}"></script>{% endblock %}

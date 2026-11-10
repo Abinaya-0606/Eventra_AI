@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Event Policies{% endblock %}
+{% block heading %}Event Policies{% endblock %}
+{% block subheading %}Shown directly from the college knowledge documents.{% endblock %}
+{% block content %}
+<div class="card">
+  {% for title, paragraphs in documents.items() %}
+  <details class="acc"{% if loop.first %} open{% endif %}>
+    <summary>{{ title }}</summary>
+    <ul>{% for p in paragraphs %}<li>{{ p }}</li>{% endfor %}</ul>
+    <a class="btn soft sm" href="{{ url_for('chat.assistant', q='Tell me about the ' ~ title|lower ~ ' rules') }}">Ask the assistant</a>
+  </details>
+  {% else %}
+  <div class="empty-state"><h3>No policy documents yet</h3><p>Add .txt files to the data/ folder and run <code>python ingest.py</code>.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

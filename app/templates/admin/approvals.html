@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% from "partials/status.html" import status_pill %}
+{% from "partials/pagination.html" import pager %}
+{% block title %}Event approvals{% endblock %}
+{% block heading %}Event approvals{% endblock %}
+{% block subheading %}Review events submitted by organizers. Rejections need a reason.{% endblock %}
+{% block content %}
+<div class="tabs" role="tablist" aria-label="Approval views">
+  <a class="tab" href="{{ url_for('admin.approvals', view='pending') }}" aria-selected="{{ 'true' if view == 'pending' else 'false' }}">Pending ({{ counts.pending }})</a>
+  <a class="tab" href="{{ url_for('admin.approvals', view='approved') }}" aria-selected="{{ 'true' if view == 'approved' else 'false' }}">Approved ({{ counts.approved }})</a>
+  <a class="tab" href="{{ url_for('admin.approvals', view='rejected') }}" aria-selected="{{ 'true' if view == 'rejected' else 'false' }}">Rejected ({{ counts.rejected }})</a>
+</div>
+<section class="card">
+  {% for e in items %}
+  <div class="review-row">
+    <div>
+      <a href="{{ url_for('admin.event_detail', event_id=e.id) }}"><b>{{ e.name }}</b></a> {% if view != 'pending' %}{{ status_pill(e.status, e.status|capitalize) }}{% endif %}
+      <small class="muted block">{{ e.event_type }} · {{ e.event_date }} {{ e.start_time }}{% if e.venue %} · {{ e.venue }}{% endif %} · {{ e.participants }} participants · {{ "₹{:,.0f}".format(e.budget) }}</small>
+      <small class="muted block">Organizer: {{ e.owner_name }} ({{ e.owner_email }}){% if e.submitted_at %} · submitted {{ e.submitted_at[:10] }}{% endif %}</small>
+      {% if view == 'pending' and e.description %}<small class="block">{{ e.description[:160] }}{{ '…' if e.description|length > 160 }}</small>{% endif %}
+      {% if view != 'pending' %}<small class="muted block">Reviewed {{ (e.reviewed_at or '')[:10] or '—' }}{% if e.reviewer_name %} by {{ e.reviewer_name }}{% endif %}</small>{% endif %}
+      {% if view == 'rejected' and e.admin_note %}<small class="block"><b>Reason:</b> {{ e.admin_note }}</small>{% endif %}
+    </div>
+    <div class="acts">
+      <a class="btn soft sm nomt" href="{{ url_for('admin.event_detail', event_id=e.id) }}">View details</a>
+      {% if view == 'pending' %}
+        {% set mine = e.owner_id == current_user.id or (e.assignee_ids or '').split(',')|select('equalto', current_user.id|string)|list %}
+        {% if mine %}
+          <small class="muted">You are associated with this event, so another admin must review it.</small>
+        {% else %}
+        <form method="post" action="{{ url_for('admin.approve_event', event_id=e.id) }}" class="inline">{{ csrf_field() }}<input type="hidden" name="next" value="{{ url_for('admin.approvals') }}"><button class="btn primary sm nomt" type="submit">Approve</button></form>
+        <form method="post" action="{{ url_for('admin.reject_event', event_id=e.id) }}" class="inline-form">{{ csrf_field() }}<input type="hidden" name="next" value="{{ url_for('admin.approvals') }}">
+          <label class="sr" for="note-{{ e.id }}">Rejection reason</label><textarea id="note-{{ e.id }}" name="note" rows="1" maxlength="300" required placeholder="Reason for rejection (required)"></textarea>
+          <button class="btn soft sm nomt danger" type="submit">Reject</button></form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state small">
+    {% if view == 'pending' %}<h3>Nothing waiting for review</h3><p>When an organizer submits an event it appears here and you get a notification.</p>
+    {% else %}<h3>No {{ view }} events yet</h3><p>Decisions you make will be listed here.</p>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% if view != 'pending' %}{{ pager('admin.approvals', page, pages) }}{% endif %}
+{% endblock %}

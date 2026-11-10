@@ -1,0 +1,12 @@
+{% extends "auth_base.html" %}
+{% from "partials/forms.html" import input_row, csrf_field with context %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+<h1 class="auth-title">Forgot your password?</h1><p class="auth-sub">Enter your email and we will send you a reset link.</p>
+{% if error %}<div class="field-error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('auth.forgot_password') }}" novalidate data-validate>
+  {{ csrf_field() }}{{ input_row("email", "Email", "email", autocomplete="email") }}
+  <button class="btn primary block" type="submit">Send reset link</button>
+</form>
+<p class="auth-links"><a href="{{ url_for('auth.login') }}">Back to log in</a></p>
+{% endblock %}

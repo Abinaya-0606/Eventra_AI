@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "partials/status.html" import status_pill %}
+{% block title %}Admin dashboard{% endblock %}
+{% block heading %}Admin overview{% endblock %}
+{% block subheading %}Hello, {{ current_user.name.split()[0] }}. Platform overview across all users and events.{% endblock %}
+{% block content %}
+<div class="dash-actions">
+  <a class="btn primary" href="{{ url_for('admin.approvals') }}"><svg><use href="#i-shield"/></svg>Review approvals{% if by_status.get('pending') %} ({{ by_status.get('pending') }}){% endif %}</a>
+  <a class="btn soft" href="{{ url_for('admin.all_events') }}"><svg><use href="#i-event"/></svg>All events</a>
+  <a class="btn soft" href="{{ url_for('admin.user_list') }}"><svg><use href="#i-users"/></svg>Manage users</a>
+  <a class="btn soft" href="{{ url_for('admin.venue_list') }}"><svg><use href="#i-book"/></svg>Venues</a>
+  <a class="btn soft" href="{{ url_for('admin.activity_log') }}"><svg><use href="#i-log"/></svg>Activity logs</a>
+</div>
+
+<div class="stats">
+  <a class="stat" href="{{ url_for('admin.student_list') }}"><span>Total students</span><strong>{{ by_role.get('student', 0) }}</strong></a>
+  <a class="stat" href="{{ url_for('admin.organizer_list') }}"><span>Total organizers</span><strong>{{ by_role.get('organizer', 0) }}</strong></a>
+  <a class="stat" href="{{ url_for('admin.all_events') }}"><span>Total events</span><strong>{{ total_events }}</strong></a>
+  <a class="stat{% if by_status.get('pending') %} attention{% endif %}" href="{{ url_for('admin.approvals') }}"><span>Pending approvals</span><strong>{{ by_status.get('pending', 0) }}</strong></a>
+  <a class="stat good" href="{{ url_for('admin.approvals', view='approved') }}"><span>Approved events</span><strong>{{ by_status.get('approved', 0) }}</strong></a>
+  <a class="stat bad" href="{{ url_for('admin.approvals', view='rejected') }}"><span>Rejected events</span><strong>{{ by_status.get('rejected', 0) }}</strong></a>
+</div>
+<p class="muted small-note">Also on the platform: {{ total_users }} total users (Total users) · {{ by_role.get('admin', 0) }} admin{{ '' if by_role.get('admin', 0) == 1 else 's' }} · {{ registrations_total }} active registrations · {{ by_status.get('completed', 0) }} completed and {{ by_status.get('draft', 0) }} draft events.</p>
+
+<div class="dash-grid">
+  <section class="card">
+    <div class="card-head row"><h2>Waiting for review</h2><a href="{{ url_for('admin.approvals') }}" class="link">Open queue</a></div>
+    {% for e in pending %}
+    <a class="list-row" href="{{ url_for('admin.event_detail', event_id=e.id) }}">
+      <span class="grow"><b>{{ e.name }}</b><small class="muted">{{ e.event_type }} · by {{ e.owner_name }} · {{ e.event_date }}</small></span>
+      {{ status_pill('pending', 'Pending') }}
+    </a>
+    {% else %}
+    <div class="empty-state small"><h3>Nothing to review</h3><p>New approval requests appear here.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <div class="card-head row"><h2>Recent activities</h2><a href="{{ url_for('admin.activity_log') }}" class="link">All logs</a></div>
+    {% for a in feed %}
+    <div class="feed-row"><span class="dot-sm"></span><span class="grow">{{ a.message }}{% if a.actor_name %} <small class="muted">by {{ a.actor_name }}</small>{% endif %}</span><small class="muted">{{ a.created_at[:16].replace('T', ' ') }}</small></div>
+    {% else %}
+    <div class="empty-state small"><p>Activity will appear here.</p></div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

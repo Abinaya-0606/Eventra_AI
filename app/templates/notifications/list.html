@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "partials/forms.html" import csrf_field with context %}
+{% from "partials/pagination.html" import pager %}
+{% block title %}Notifications{% endblock %}
+{% block heading %}Notifications{% endblock %}
+{% block subheading %}Approvals, registrations and event updates.{% endblock %}
+{% block content %}
+<div class="table-tools">
+  <div class="tabs" style="margin:0"><a class="tab" href="{{ url_for('notifications.inbox') }}" aria-selected="{{ 'false' if unread_only else 'true' }}">All</a><a class="tab" href="{{ url_for('notifications.inbox', unread=1) }}" aria-selected="{{ 'true' if unread_only else 'false' }}">Unread</a></div>
+  <form method="post" action="{{ url_for('notifications.read_all') }}">{{ csrf_field() }}<button class="btn soft sm nomt" type="submit">Mark all as read</button></form>
+</div>
+<section class="card">
+  {% for n in items %}
+  <div class="notif {{ '' if n.is_read else 'unread' }}">
+    <span class="dot-sm" aria-hidden="true"></span>
+    <div class="grow"><span class="kind">{{ n.kind|replace('_', ' ') }}</span>
+      <form method="post" action="{{ url_for('notifications.read', notification_id=n.id) }}">{{ csrf_field() }}<button class="link-btn" type="submit">{{ n.message }}</button></form>
+      <small class="muted">{{ n.created_at[:16].replace('T', ' ') }} UTC</small></div>
+  </div>
+  {% else %}
+  <div class="empty-state small"><h3>{{ 'No unread notifications' if unread_only else 'No notifications yet' }}</h3><p>We will let you know here when something needs your attention.</p></div>
+  {% endfor %}
+</section>
+{{ pager('notifications.inbox', page, pages) }}
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}AI tools · {{ event.name }}{% endblock %}
+{% block heading %}AI tools{% endblock %}
+{% block subheading %}{{ event.name }} · {{ event.event_type }} · {{ event.event_date }}{% endblock %}
+{% block content %}
+<p><a class="link" href="{{ url_for('events.detail', event_id=event.id) }}">&larr; Back to event</a></p>
+{% if not can_generate %}<div class="note info">{{ 'Only the organizer can generate with AI.' if event.owner_id != current_user.id else 'This event is completed, so AI tools are read-only.' }} Saved results are shown below.</div>{% endif %}
+
+<div class="tabs" role="tablist" aria-label="AI tools for this event">
+  {% for key, label in [('budget','Budget Optimizer'),('venues','Venues'),('risks','Risk Analysis'),('improve','Improvements'),('proposal','Proposal')] %}
+  <button type="button" class="tab" role="tab" id="tab-{{ key }}" data-tab="{{ key }}" aria-controls="panel-{{ key }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ label }}</button>
+  {% endfor %}
+</div>
+
+<section class="panel" id="panel-budget" role="tabpanel" aria-labelledby="tab-budget">
+  <div class="card"><div class="card-head row"><div><h2>AI Budget Optimizer</h2><p>Total budget {{ "₹{:,.0f}".format(event.budget) }}. The AI suggests a split; you can change every amount before saving.</p></div>
+    {% if can_generate %}<button type="button" class="btn primary" id="gen-budget"><svg><use href="#i-spark"/></svg><span class="lbl">Suggest budget split</span></button>{% endif %}</div>
+    <div class="field-error" role="alert" hidden data-error="budget"></div>
+    <div id="out-budget"><div class="empty-state small"><p>No budget breakdown saved yet.</p></div></div></div>
+</section>
+
+<section class="panel" id="panel-venues" role="tabpanel" aria-labelledby="tab-venues" hidden>
+  <div class="card"><div class="card-head"><h2>AI Venue Recommendation</h2><p>Uses the college venue list. Venue availability is never checked or assumed.</p></div>
+    {% if can_generate %}
+    <fieldset class="checks"><legend>Required facilities</legend>
+      {% for key, label in facilities.items() %}<label><input type="checkbox" name="fac" value="{{ key }}"> {{ label }}</label>{% endfor %}
+    </fieldset>
+    <button type="button" class="btn primary" id="gen-venues"><svg><use href="#i-spark"/></svg><span class="lbl">Recommend venues</span></button>
+    {% endif %}
+    <div class="field-error" role="alert" hidden data-error="venues"></div>
+    <div id="out-venues"><div class="empty-state small"><p>No recommendation yet.</p></div></div></div>
+</section>
+
+<section class="panel" id="panel-risks" role="tabpanel" aria-labelledby="tab-risks" hidden>
+  <div class="card"><div class="card-head row"><div><h2>AI Risk Analysis</h2><p>Rule-based warnings come from your saved data. AI risks add likely problems and how to prevent them.</p></div>
+    {% if can_generate %}<button type="button" class="btn primary" id="gen-risks"><svg><use href="#i-spark"/></svg><span class="lbl">Analyse risks</span></button>{% endif %}</div>
+    <div class="field-error" role="alert" hidden data-error="risks"></div>
+    <div id="out-risks"></div></div>
+</section>
+
+<section class="panel" id="panel-improve" role="tabpanel" aria-labelledby="tab-improve" hidden>
+  <div class="card"><div class="card-head row"><div><h2>Event Improvement Suggestions</h2><p>Ideas to make the event better, based on your event details.</p></div>
+    {% if can_generate %}<button type="button" class="btn primary" id="gen-improve"><svg><use href="#i-spark"/></svg><span class="lbl">Suggest improvements</span></button>{% endif %}</div>
+    <div class="field-error" role="alert" hidden data-error="improve"></div>
+    <div id="out-improve"><div class="empty-state small"><p>No suggestions yet.</p></div></div></div>
+</section>
+
+<section class="panel" id="panel-proposal" role="tabpanel" aria-labelledby="tab-proposal" hidden>
+  <div class="card"><div class="card-head row"><div><h2>Event Proposal</h2><p>English only. The schedule and budget are taken from your saved event data, not written by the AI.</p></div>
+    <div class="res-actions">
+    {% if can_generate %}<button type="button" class="btn primary" id="gen-proposal"><svg><use href="#i-spark"/></svg><span class="lbl">{{ 'Regenerate proposal' if has_proposal else 'Generate proposal' }}</span></button>{% endif %}
+    <a class="btn soft" id="pdf-link" href="{{ url_for('planning.proposal_pdf', event_id=event.id) }}" {{ 'hidden' if not has_proposal }}><svg><use href="#i-download"/></svg>Download PDF</a></div></div>
+    <div class="field-error" role="alert" hidden data-error="proposal"></div>
+    <div id="out-proposal"><div class="empty-state small"><p>No proposal yet.</p></div></div></div>
+</section>
+<script type="application/json" id="state">{{ state|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/budget_opt.js') }}"></script><script src="{{ url_for('static', filename='js/planning.js') }}"></script>{% endblock %}

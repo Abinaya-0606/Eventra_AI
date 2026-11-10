@@ -1,0 +1,11 @@
+{# Previous / Next links that keep the current search and filters. Needs: endpoint, page, pages #}
+{% macro pager(endpoint, page, pages) %}
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% set args = request.args.to_dict() %}
+  {% if page > 1 %}<a class="btn soft sm nomt" href="{{ url_for(endpoint, **dict(args, page=page - 1)) }}">← Previous</a>{% else %}<span></span>{% endif %}
+  <span class="pager-info">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn soft sm nomt" href="{{ url_for(endpoint, **dict(args, page=page + 1)) }}">Next →</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}

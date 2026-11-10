@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block heading %}Analytics{% endblock %}
+{% block subheading %}Numbers for {{ scope }} with an event date in {{ year }}.{% endblock %}
+{% macro money(n) %}{{ "₹{:,.0f}".format(n) }}{% endmacro %}
+{% macro chart(key, title, note="") %}
+<section class="card chart-card"><div class="card-head"><h2>{{ title }}</h2>{% if note %}<p>{{ note }}</p>{% endif %}</div>
+  <div class="chart-box"><canvas id="chart-{{ key }}" role="img" aria-label="{{ title }}"></canvas><p class="chart-fallback muted" hidden>The chart could not load (are you offline?). The table below has the same numbers.</p></div>
+  <details class="data-details"><summary>View as table</summary>{{ caller() }}</details></section>
+{% endmacro %}
+{% block content %}
+<form method="get" class="filters" action="{{ url_for('analytics.dashboard') }}">
+  <div><label for="year">Year</label><select id="year" name="year" onchange="this.form.submit()">{% for y in years %}<option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>{% endfor %}</select></div>
+  <noscript><button class="btn soft sm">Show</button></noscript>
+  <a class="btn primary push" href="{{ url_for('analytics.report_pdf', year=year) }}"><svg><use href="#i-download"/></svg>Download PDF report</a>
+</form>
+
+{% if not data.totals.events %}
+<div class="card"><div class="empty-state"><h3>No events in {{ year }}</h3><p>Charts appear once you have events with a date in this year.</p>
+  <a class="btn primary" href="{{ url_for('events.create_event') }}">Create event</a></div></div>
+{% else %}
+<div class="stats">
+  <div class="stat"><span>Total events</span><strong>{{ data.totals.events }}</strong></div>
+  <div class="stat"><span>Completed</span><strong>{{ data.totals.completed }}</strong></div>
+  <div class="stat"><span>Pending approval</span><strong>{{ data.totals.pending }}</strong></div>
+  <div class="stat"><span>Estimated budget</span><strong>{{ money(data.totals.budget) }}</strong></div>
+  <div class="stat"><span>Average per event</span><strong>{{ money(data.totals.average_budget) }}</strong></div>
+  <div class="stat"><span>Expected participants</span><strong>{{ data.totals.participants }}</strong></div>
+</div>
+<p class="muted small-note">Rejected events are not counted in budget and participant totals.</p>
+
+<div class="chart-grid">
+  {% call chart("monthly", "Events per month") %}<table class="table"><tbody>{% for m in data.monthly %}<tr><td>{{ m.month }}</td><td>{{ m.events }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+  {% call chart("budget", "Estimated budget per month (₹)") %}<table class="table"><tbody>{% for m in data.monthly %}<tr><td>{{ m.month }}</td><td>{{ money(m.budget) }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+  {% call chart("types", "Events by category") %}<table class="table"><tbody>{% for t in data.types %}<tr><td>{{ t.label }}</td><td>{{ t.count }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+  {% call chart("status", "Completed vs pending vs other", "How many events are in each status.") %}<table class="table"><tbody>{% for s in data.status %}<tr><td>{{ s.label }}</td><td>{{ s.count }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+  {% call chart("compare", "Budget vs saved breakdown (₹)", "Largest 8 events. A breakdown is saved on the event's AI tools page.") %}
+    <table class="table"><thead><tr><th>Event</th><th class="num">Budget</th><th class="num">Breakdown</th></tr></thead><tbody>{% for c in data.comparison %}<tr><td>{{ c.name }}</td><td>{{ money(c.budget) }}</td><td>{{ money(c.planned) if c.planned is not none else 'Not saved' }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+  {% call chart("categories", "Planned spending by category (₹)", "Totals of all saved budget breakdowns.") %}<table class="table"><tbody>{% for c in data.categories %}<tr><td>{{ c.label }}</td><td>{{ money(c.amount) }}</td></tr>{% endfor %}</tbody></table>{% endcall %}
+</div>
+<script type="application/json" id="analytics-data">{{ data|tojson }}</script>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if data.totals.events %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}" defer></script>{% endif %}{% endblock %}
